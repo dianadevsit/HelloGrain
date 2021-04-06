@@ -1,12 +1,20 @@
-const express = require('express');
-const app = express();
-const io = require('socket.io')(3000);
+const io = require('socket.io')(3000)
+const users = {}
 
-//Everytime someone connect to the server the message is being sent with the event 'chat-message' with 'Hello Grain'
+
 io.on('connection', socket => {
-    console.log('new User')
-    socket.emit('chat-message', 'Hello Grain')
-    socket.on('send-chat-message', message => {
-        console.log(message)
+    socket.on('new-user', name => {
+        users[socket.id] = name
+        socket.broadcast.emit('user-connected', name)
     })
-})
+    socket.on('send-chat-message', message => {
+        socket.broadcast.emit('chat-message', { message: message, name: users[socket.id]})
+    })
+    socket.on('send-chat-message', message => {
+        socket.broadcast.emit('chat-message',  message)
+    })
+    socket.on('disconnect', () => {
+        socket.broadcast.emit('user-disconnected', user[socket.id])
+        delete users[socket.id]
+        })
+    })
